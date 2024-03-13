@@ -11,7 +11,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import db from "../firebase";
-// import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { setMovies } from "../features/movie/movieSlice";
 import { selectUserName } from "../features/user/userSlice";
 
@@ -29,39 +29,45 @@ const Home = (props) => {
 
 
     useEffect(() => {
-        alert("hello");
-        db.collection("movies").onSnapshot((snapshot) => {
-            snapshot.docs.map((doc) => {
-                console.log(doc.data);
-                switch (doc.data().type) {
-              case "recommend":
-                recommends = [...recommends, { id: doc.id, ...doc.data() }];
-                break;
-    
-              case "new":
-                newDisneys = [...newDisneys, { id: doc.id, ...doc.data() }];
-                break;
-    
-              case "original":
-                originals = [...originals, { id: doc.id, ...doc.data() }];
-                break;
-    
-              case "trending":
-                trending = [...trending, { id: doc.id, ...doc.data() }];
-                break;
-            }
-          });
-    
-          dispatch(
-            setMovies({
-              recommend: recommends,
-              newDisney: newDisneys,
-              original: originals,
-              trending: trending,
-            })
-          );
+      const unsubscribe = onSnapshot(collection(db, "movies"), (snapshot) => {
+        let recommends = [];
+        let newDisneys = [];
+        let originals = [];
+        let trending = [];
+  
+        snapshot.docs.forEach((doc) => {
+          console.log(doc.data());
+          const movieData = { id: doc.id, ...doc.data() };
+          switch (movieData.type) {
+            case "recommend":
+              recommends = [...recommends, movieData];
+              break;
+  
+            case "new":
+              newDisneys = [...newDisneys, movieData];
+              break;
+  
+            case "original":
+              originals = [...originals, movieData];
+              break;
+  
+            case "trending":
+              trending = [...trending, movieData];
+              break;
+          }
         });
-      }, [userName, dispatch]);
+  
+        dispatch(
+          setMovies({
+            recommend: recommends,
+            newDisney: newDisneys,
+            original: originals,
+            trending: trending,
+          })
+        );
+      });
+  
+   }, [userName]);
     
 
 
